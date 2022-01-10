@@ -2,8 +2,20 @@
 <html>
 <head>
 <title>Bunn Farm - THE GAME</title>
+<style>
+    body {
+        margin: 0;
+        font-family: monospace;
+    }
+    canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+    }
+</style>
 </head>
 <body>
+<!-- https://twgljs.org/examples/tiny.html -->
 <script id="vs" type="notjs">
     attribute vec4 position;
     
@@ -29,8 +41,49 @@
         gl_FragColor = vec4( vec3( color * 0.5, sin( color + time / 2.5 ) * 0.75, color ), 1.0 );
     }
 </script>
+<!-- from GraphicsTown JS 2015 -->
+<script id="vs-2" type="notjs">
+    precision highp float;
+
+    attribute vec3 position;
+    attribute vec3 normal;
+
+    varying vec3 pos;
+    varying vec3 norm;
+
+    uniform mat4 view;
+    uniform mat4 proj;
+    uniform mat4 model;
+
+    void main() {
+        gl_Position = proj * view * model * vec4(position, 1.0);
+        pos = gl_Position.xyz;
+        norm = normalize(view * model * vec4(normal, 0.0)).xyz;
+    }
+</script>
+<script id="fs-2" type="notjs">
+    precision highp float;
+
+    varying vec3 pos;
+    varying vec3 norm;
+
+    uniform mat4 view;
+    uniform vec3 lightdir;
+    uniform vec3 color;
+
+    void main() {
+        vec3 dlight = (view * vec4(lightdir, 0.0)).xyz;
+        float dshift = 0.5;
+        float dscale = (dot(norm, dlight) + dshift)/(1.0 + dshift);
+        //float dscale = max(dot(norm, lightdir), 0.0);
+        float amnt = 0.5;
+        float diffuse = (1.0 - amnt) + amnt*dscale;
+        gl_FragColor = vec4(color * diffuse, 1.0);
+    }
+</script>
 <canvas id="c"></canvas>
 <script src="../libraries/twgl-full.js"></script>
+<script src="../libraries/geom-utils.js"></script>
 <script>
     const gl = document.getElementById("c").getContext("webgl");
     const programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
